@@ -1,0 +1,99 @@
+.filter-item {
+  position: relative;
+
+  @extend .mt-2;
+  @extend .px-1;
+  @extend .py-2;
+
+  &.inactive {
+    @extend .text-muted;
+  }
+
+  .icon {
+    margin: 0 0.75rem;
+  }
+
+  &::after {
+    content: " ";
+    position: absolute;
+    inset: 0;
+    border: 1px solid $gray-500;
+    z-index: -1;
+  }
+
+  &:not(.inactive)::after {
+    border-color: $gray-600;
+  }
+
+  &.edited::after {
+    border-width: 2px;
+  }
+}
+
+.range-filter {
+  margin-top: 0.8rem;
+  height: 80px;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+
+  .bar {
+    position: relative;
+    height: 100%;
+    flex-grow: 1;
+
+    &:not(:last-child) {
+      margin-right: 1px;
+    }
+  }
+
+  .global,
+  .filtered {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    transition: height ease-in-out 0.2s;
+  }
+
+  .global {
+    background: $gray-400;
+  }
+
+  .filtered {
+    background: $gray-800;
+  }
+
+  .label {
+    position: absolute;
+    text-align: center;
+    width: 100%;
+    font-size: 0.8em;
+
+    &.inside {
+      top: 0;
+      color: $gray-100;
+    }
+
+    &.outside {
+      bottom: 100%;
+      color: $gray-800;
+    }
+  }
+}
+
+.rc-slider {
+  .rc-slider-handle {
+    background-color: white;
+    border-color: black;
+  }
+}
+
+.rc-slider-disabled {
+  background-color: unset !important;
+
+  .rc-slider-handle {
+    background-color: $gray-400 !important;
+  }
+}

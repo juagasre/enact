@@ -1,0 +1,34 @@
+.horizontal-slider {
+  width: 100%;
+  height: 18px;
+  .track {
+    top: 25%;
+    height: 50%;
+    cursor: pointer;
+  }
+  .track:first-child,
+  .track:nth-child(2) {
+    margin-left: 5px;
+  }
+  .track:last-child,
+  .track:nth-child(n-1) {
+    margin-right: 5px;
+  }
+}
+.thumb {
+  border-radius: 50%;
+  border: #d3d3d3 2px solid;
+  // /!\ changing thumb size must also change minDistance setting in ReactSlider AND slider height
+  height: 18px;
+  width: 18px;
+  cursor: pointer;
+}
+
+.custom-color-picker {
+  background-color: $body-bg;
+
+  width: 220px;
+
+  padding: 10px;
+  border-radius: 4px;
+}

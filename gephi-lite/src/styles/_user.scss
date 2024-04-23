@@ -1,0 +1,27 @@
+.user {
+  @extend .rounded-circle;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid $primary;
+  height: $user-avatar-size;
+  width: $user-avatar-size;
+  background-color: $light;
+  overflow: hidden;
+
+  &.user-sm {
+    height: 0.8 * $user-avatar-size;
+    width: 0.8 * $user-avatar-size;
+  }
+
+  img,
+  svg {
+    height: 100%;
+    width: 100%;
+
+    &.default {
+      padding: 5px;
+      color: $secondary;
+    }
+  }
+}

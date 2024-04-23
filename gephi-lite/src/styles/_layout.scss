@@ -1,0 +1,33 @@
+#app-root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+
+  header {
+    flex-shrink: 0;
+
+    ul.nav {
+      li.dropdown {
+        ul.dropdown-menu {
+          inset: 40px 0px auto auto;
+        }
+        &:hover {
+          ul.dropdown-menu {
+            display: block;
+          }
+        }
+      }
+
+      .dropdown-item {
+        display: flex;
+        align-items: center;
+      }
+    }
+  }
+
+  main {
+    flex-shrink: 1;
+    flex-grow: 1;
+    overflow: hidden;
+  }
+}
