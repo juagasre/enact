@@ -40,9 +40,10 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/_github/, ""),
       },
-      '/yeast.gexf': {
-        target: 'http://localhost:8000',
-        changeOrigin: true
+      '^/sem_repo': {
+        target: 'http://localhost:27621',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/sem_repo/, ""),
       }
     },
   },
