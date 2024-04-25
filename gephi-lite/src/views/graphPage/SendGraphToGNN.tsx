@@ -16,7 +16,7 @@ export const SendGraphToGnn: FC = () => {
 
   useEffect(() => {
     handleActivation();
-    const timer = setTimeout(() => ticking && setCount(count + 1), 5e3);
+    const timer = setTimeout(() => ticking && setCount(count + 1), 2e3);
     return () => clearTimeout(timer);
   }, [count, ticking, handleActivation])
 
