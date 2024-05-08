@@ -1,0 +1,10 @@
+[ {
+  "@id" : "http://localhost/sugar-ontologies/core",
+  "@type" : [ "http://www.w3.org/2002/07/owl#Ontology" ]
+}, {
+  "@id" : "http://localhost/sugar-ontologies/core#Asteroid",
+  "@type" : [ "http://www.w3.org/2002/07/owl#Class" ]
+}, {
+  "@id" : "http://localhost/sugar-ontologies/core#Pilot",
+  "@type" : [ "http://www.w3.org/2002/07/owl#Class" ]
+} ]

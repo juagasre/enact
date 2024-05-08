@@ -1,0 +1,1350 @@
+openapi: 3.0.3
+info:
+  title: Semantic Repository
+  description: "The Semantic Repository enabler offers a “nexus” for data models, 
+    ontologies, and other files, that can be uploaded in different file formats, 
+    and served to users with relevant documentation."
+  termsOfService: ""
+  version: "1.0.0"
+servers:
+  - url: http://localhost:8080
+security: [ ]
+
+tags:
+  - name: namespace
+    description: Repository namespaces
+  - name: model
+    description: Models in the repository
+  - name: version
+    description: Specific versions of models
+  - name: content
+    description: Content of models (data model files)
+  - name: doc_model
+    description: Documentation generation and serving for models
+  - name: doc_sandbox
+    description: Documentation sandbox
+  - name: webhook
+    description: Webhooks
+  - name: meta
+    description: Various meta-information endpoints
+  - name: openapi
+    description: OpenAPI endpoints
+
+paths:
+  ### Root info ###
+  /v1/m:
+    get:
+      summary: Get a list of namespaces
+      description: Return a list of namespaces in the repository
+      operationId: getAllNamespacesRoute
+      tags: [ namespace ]
+      parameters:
+        - $ref: '#/components/parameters/PageQuery'
+        - $ref: '#/components/parameters/PageSizeQuery'
+        - $ref: '#/components/parameters/SortByQuery'
+        - $ref: '#/components/parameters/OrderQuery'
+        - $ref: '#/components/parameters/FilterQuery'
+      responses:
+        "200":
+          description: List of namespaces WITHOUT their models
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RootInfo'
+
+  ### Namespace ###
+  /v1/m/{namespace}:
+    get:
+      summary: Get a namespace by name
+      description: Return a namespace based on name
+      operationId: getNamespaceRoute
+      tags: [ namespace ]
+      parameters:
+        - $ref: '#/components/parameters/NamespacePath'
+        - $ref: '#/components/parameters/PageQuery'
+        - $ref: '#/components/parameters/PageSizeQuery'
+        - $ref: '#/components/parameters/SortByQuery'
+        - $ref: '#/components/parameters/OrderQuery'
+        - $ref: '#/components/parameters/FilterQuery'
+      responses:
+        "200":
+          description: Namespace with its models. The models will be returned WITHOUT
+            their versions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FullNamespace'
+        "404":
+          description: Namespace not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Create a new namespace
+      description: Create a new namespace in the repository.
+      operationId: postNamespaceRoute
+      tags: [ namespace ]
+      parameters:
+        - $ref: '#/components/parameters/NamespacePath'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NamespaceUpdate'
+      responses:
+        "200": { $ref: '#/components/responses/Success' }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "409": { $ref: '#/components/responses/DuplicateKey' }
+
+    delete:
+      summary: Delete a namespace
+      description: Delete a namespace in the repository. This is only possible if
+        the namespace is empty.
+      operationId: deleteNamespaceRoute
+      tags: [ namespace ]
+      parameters:
+        - $ref: '#/components/parameters/NamespacePath'
+        - $ref: '#/components/parameters/ForceDeleteQuery'
+      responses:
+        "200": { $ref: '#/components/responses/Success' }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "404":
+          description: Namespace not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      summary: Update an existing namespace
+      description: Change one or more fields of a namespace in the repository.
+      operationId: patchNamespaceRoute
+      tags: [ namespace ]
+      parameters:
+        - $ref: '#/components/parameters/NamespacePath'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NamespaceUpdate'
+      responses:
+        "200": { $ref: '#/components/responses/Success' }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "404":
+          description: Namespace not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  ### Model ###
+  /v1/m/{namespace}/{model}:
+    get:
+      summary: Get a model by name
+      description: Return a model based on name
+      operationId: getModelRoute
+      tags: [ model ]
+      parameters:
+        - $ref: '#/components/parameters/NamespacePath'
+        - $ref: '#/components/parameters/ModelPath'
+        - $ref: '#/components/parameters/PageQuery'
+        - $ref: '#/components/parameters/PageSizeQuery'
+        - $ref: '#/components/parameters/SortByQuery'
+        - $ref: '#/components/parameters/OrderQuery'
+        - $ref: '#/components/parameters/FilterQuery'
+      responses:
+        "200":
+          description: Model with model version list. The model versions will be returned
+            WITHOUT the details on the available formats and the status of the documentation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FullModel'
+        "404":
+          description: Model not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Create a new model
+      description: Create a new model in the repository.
+      operationId: postModelRoute
+      tags: [ model ]
+      parameters:
+        - $ref: '#/components/parameters/NamespacePath'
+        - $ref: '#/components/parameters/ModelPath'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModelUpdate'
+      responses:
+        "200": { $ref: '#/components/responses/Success' }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "409": { $ref: '#/components/responses/DuplicateKey' }
+        "404":
+          description: Namespace not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete a model
+      description: "Delete a model in the repository. This is only possible if the\
+        \ model is empty, i.e., all model versions were already deleted."
+      operationId: deleteModelRoute
+      tags: [ model ]
+      parameters:
+        - $ref: '#/components/parameters/NamespacePath'
+        - $ref: '#/components/parameters/ModelPath'
+        - $ref: '#/components/parameters/ForceDeleteQuery'
+      responses:
+        "200": { $ref: '#/components/responses/Success' }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "404":
+          description: Model not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      summary: Update an existing model
+      description: Change one or more fields of a model in the repository.
+      operationId: patchModelRoute
+      tags: [ model ]
+      parameters:
+        - $ref: '#/components/parameters/NamespacePath'
+        - $ref: '#/components/parameters/ModelPath'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModelUpdate'
+      responses:
+        "200": { $ref: '#/components/responses/Success' }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "404":
+          description: Model not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  ### Model version ###
+  /v1/m/{namespace}/{model}/{version}:
+    get:
+      summary: Get a model version
+      description: Return a specific version of a model
+      operationId: getModelVersionRoute
+      tags: [ version ]
+      parameters:
+        - $ref: '#/components/parameters/NamespacePath'
+        - $ref: '#/components/parameters/ModelPath'
+        - $ref: '#/components/parameters/ModelVersionPath'
+      responses:
+        "200":
+          description: Model version found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FullModelVersion'
+        "404":
+          description: Model version not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Create a new model version
+      description: Create a new version of a model in the repository.
+      operationId: postModelVersionRoute
+      tags: [ version ]
+      parameters:
+        - $ref: '#/components/parameters/NamespacePath'
+        - $ref: '#/components/parameters/ModelPath'
+        - $ref: '#/components/parameters/ModelVersionPath'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModelVersionUpdate'
+      responses:
+        "200": { $ref: '#/components/responses/Success' }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "409": { $ref: '#/components/responses/DuplicateKey' }
+        "404":
+          description: Namespace or model not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete a model version
+      description: "Delete a specific version of a model in the repository. This is\
+        \ only possible if the model version is empty, i.e., all associated content\
+        \ and documentation pages were already deleted."
+      operationId: deleteModelVersionRoute
+      tags: [ version ]
+      parameters:
+        - $ref: '#/components/parameters/NamespacePath'
+        - $ref: '#/components/parameters/ModelPath'
+        - $ref: '#/components/parameters/ModelVersionPath'
+        - $ref: '#/components/parameters/ForceDeleteQuery'
+      responses:
+        "200": { $ref: '#/components/responses/Success' }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "404":
+          description: Model not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      summary: Update an existing model version
+      description: Change one or more fields of a specific version of a model in the
+        repository.
+      operationId: patchModelVersionRoute
+      tags: [ version ]
+      parameters:
+        - $ref: '#/components/parameters/NamespacePath'
+        - $ref: '#/components/parameters/ModelPath'
+        - $ref: '#/components/parameters/ModelVersionPath'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModelVersionUpdate'
+      responses:
+        "200": { $ref: '#/components/responses/Success' }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "404":
+          description: Model version not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  ### Content ###
+  /v1/m/{namespace}/{model}/{version}/content:
+    get:
+      summary: Get the model's content
+      description: Return the content of a specific version of a model
+      operationId: getContentRoute
+      tags: [ content ]
+      parameters:
+        - $ref: '#/components/parameters/NamespacePath'
+        - $ref: '#/components/parameters/ModelPath'
+        - $ref: '#/components/parameters/ModelVersionPath'
+        - name: format
+          in: query
+          description: "Preferred format for the content. If not specified, content\
+          \ in the default format will be returned, if possible."
+          schema: { $ref: '#/components/schemas/FormatName' }
+      responses:
+        "200": { $ref: '#/components/responses/ContentFound' }
+        "404": { $ref: '#/components/responses/ContentNotFound' }
+
+    post:
+      summary: Upload model's content
+      description: Upload content for a specific version of a model in the repository.
+      operationId: postContentRoute
+      tags: [ content ]
+      parameters:
+        - $ref: '#/components/parameters/NamespacePath'
+        - $ref: '#/components/parameters/ModelPath'
+        - $ref: '#/components/parameters/ModelVersionPath'
+        - name: format
+          in: query
+          description: "Format tag of the content. This is recommended (but not required)\
+          \ to be the file's Media Type. If the format does not match the file's Media\
+          \ Type, a warning will be issued."
+          required: true
+          schema: { $ref: '#/components/schemas/FormatName' }
+        - $ref: '#/components/parameters/OverwriteQuery'
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostFormData'
+            encoding:
+              content:
+                contentType: '*/*'
+      responses:
+        "200": { $ref: '#/components/responses/Success' }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "404":
+          description: Model version not found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    delete:
+      summary: Delete a model's content
+      description: Delete content in a given format for a specific version of a model
+        in the repository.
+      operationId: deleteContentRoute
+      tags: [ content ]
+      parameters:
+        - $ref: '#/components/parameters/NamespacePath'
+        - $ref: '#/components/parameters/ModelPath'
+        - $ref: '#/components/parameters/ModelVersionPath'
+        - name: format
+          in: query
+          description: Format tag of the content.
+          required: true
+          schema: { $ref: '#/components/schemas/FormatName' }
+        - $ref: '#/components/parameters/ForceDeleteQuery'
+      responses:
+        "200": { $ref: '#/components/responses/Success' }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "404": { $ref: '#/components/responses/ContentNotFound' }
+
+  /v1/c/{namespace}/{model}/{version}/{format}:
+    get:
+      summary: Get the model's content (shorthand)
+      description: Return the content of a specific version of a model
+      operationId: getContentShortRoute
+      tags: [ content ]
+      parameters:
+        - $ref: '#/components/parameters/NamespacePath'
+        - $ref: '#/components/parameters/ModelPath'
+        - $ref: '#/components/parameters/ModelVersionPath'
+        - name: format
+          in: path
+          required: true
+          description: "Preferred format for the content."
+          schema: { $ref: '#/components/schemas/FormatName' }
+      responses:
+        "200": { $ref: '#/components/responses/ContentFound' }
+        "404": { $ref: '#/components/responses/ContentNotFound' }
+
+  /v1/c/{namespace}/{model}/{version}:
+    get:
+      summary: Get the model's content (shorthand, default format)
+      description: Return the content of a specific version of a model, in the default format
+      operationId: getContentShortDefaultRoute
+      tags: [ content ]
+      parameters:
+        - $ref: '#/components/parameters/NamespacePath'
+        - $ref: '#/components/parameters/ModelPath'
+        - $ref: '#/components/parameters/ModelVersionPath'
+      responses:
+        "200": { $ref: '#/components/responses/ContentFound' }
+        "404": { $ref: '#/components/responses/ContentNotFound' }
+
+  /v1/c/{namespace}/{model}:
+    get:
+      summary: Get the model's content (shorthand, latest version, default format)
+      description: Return the content for the latest version of a model, in the default format
+      operationId: getContentShortLatestRoute
+      tags: [ content ]
+      parameters:
+        - $ref: '#/components/parameters/NamespacePath'
+        - $ref: '#/components/parameters/ModelPath'
+      responses:
+        "200": { $ref: '#/components/responses/ContentFound' }
+        "404": { $ref: '#/components/responses/ContentNotFound' }
+
+  ### Model version documentation ###
+  /v1/m/{namespace}/{model}/{version}/doc:
+    delete:
+      summary: Delete a model version's documentation
+      description: Delete all documentation for a specific version of a model in the
+        repository.
+      operationId: deleteModelDocsRoute
+      tags: [ doc_model ]
+      parameters:
+        - $ref: '#/components/parameters/NamespacePath'
+        - $ref: '#/components/parameters/ModelPath'
+        - $ref: '#/components/parameters/ModelVersionPath'
+        - $ref: '#/components/parameters/ForceDeleteQuery'
+      responses:
+        "200": { $ref: '#/components/responses/Success' }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "404":
+          description: Documentation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/m/{namespace}/{model}/{version}/doc_gen:
+    post:
+      summary: Submit a documentation job for a model version
+      description: "Submits a new version of the model version's documentation. On\
+        \ submission, the documentation generation job is added to the queue."
+      operationId: postModelJobRoute
+      tags: [ doc_model ]
+      parameters:
+        - $ref: '#/components/parameters/NamespacePath'
+        - $ref: '#/components/parameters/ModelPath'
+        - $ref: '#/components/parameters/ModelVersionPath'
+        - $ref: '#/components/parameters/PluginQuery'
+        - $ref: '#/components/parameters/OverwriteQuery'
+      requestBody:
+        description: "The body should contain one or more files to be processed. The\
+          \ endpoint also accepts compressed .tar.gz, .tgz, and .tar files."
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostFormData'
+            encoding:
+              content:
+                contentType: '*/*'
+      responses:
+        "200": { $ref: '#/components/responses/Success' }
+        "400": { $ref: '#/components/responses/BadRequest' }
+        "404":
+          description: Model version not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/m/{namespace}/{model}/{version}/doc/{file}:
+    get:
+      summary: Get the generated documentation for a model version
+      description: Returns the generated documentation files for a specific model
+        version
+      operationId: serveModelDocsRoute
+      tags: [ doc_model ]
+      parameters:
+        - $ref: '#/components/parameters/NamespacePath'
+        - $ref: '#/components/parameters/ModelPath'
+        - $ref: '#/components/parameters/ModelVersionPath'
+        - $ref: '#/components/parameters/DocFilePath'
+      responses:
+        "200":
+          description: Content found
+          content:
+            '*/*': { }
+        "404":
+          description: Content not found
+
+  ### Documentation sandbox ###
+  /v1/doc_gen:
+    get:
+      summary: Get the metadata about documentation plugins
+      description: Returns information about documentation generation plugins available
+        in this instance of the Semantic Repository
+      operationId: getDocMetaRoute
+      tags: [ meta ]
+      responses:
+        "200":
+          description: Metadata about available documentation plugins
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocMetadata'
+
+    post:
+      summary: Submit a sandbox documentation job
+      description: "Submits to the queue a new sandbox documentation generation job.\
+        \ On submission, the user is given a unique job id that can be later used\
+        \ to retrieve the job's status and the generated files."
+      operationId: postSandboxJobRoute
+      tags: [ doc_sandbox ]
+      parameters:
+        - $ref: '#/components/parameters/PluginQuery'
+      requestBody:
+        description: "The body should contain one or more files to be processed. The\
+          \ endpoint also accepts compressed .tar.gz, .tgz, and .tar files."
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostFormData'
+            encoding:
+              content:
+                contentType: '*/*'
+      responses:
+        "200": { $ref: '#/components/responses/Success' }
+        "400": { $ref: '#/components/responses/BadRequest' }
+
+  /v1/doc_gen/{job_id}:
+    get:
+      summary: Get the status of a sandbox documentation job
+      description: "Returns the status and detailed information on a sandbox documentation\
+        \ generation job, which was previously submitted."
+      operationId: getSandboxJobStatusRoute
+      tags: [ doc_sandbox ]
+      parameters:
+        - $ref: '#/components/parameters/DocJobIdPath'
+      responses:
+        "200":
+          description: Documentation job status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentationJob'
+        "404":
+          description: Documentation job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/doc_gen/{job_id}/content/{file}:
+    get:
+      summary: Get the generated documentation
+      description: Returns the generated documentation files for a specific sandbox
+        job
+      operationId: serveSandboxDocsRoute
+      tags: [ doc_sandbox ]
+      parameters:
+        - $ref: '#/components/parameters/DocJobIdPath'
+        - $ref: '#/components/parameters/DocFilePath'
+      responses:
+        "200":
+          description: Content found
+          content:
+            '*/*': { }
+        "404":
+          description: Content not found
+
+  ### Webhooks ###
+  /v1/webhook:
+    get:
+      summary: Get a list of registered webhooks
+      description: Returns a list of registered webhooks, with filtering and sorting.
+      operationId: getWebhooks
+      tags: [ webhook ]
+      parameters:
+        - $ref: '#/components/parameters/PageQuery'
+        - $ref: '#/components/parameters/PageSizeQuery'
+        - $ref: '#/components/parameters/SortByQuery'
+        - $ref: '#/components/parameters/OrderQuery'
+        - $ref: '#/components/parameters/FilterQuery'
+      responses:
+        "200":
+          description: List of webhooks
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WebhookSet' }
+
+    post:
+      summary: Create a new webhook.
+      description: Registers a new webhook in the repository.
+      operationId: postWebhook
+      tags: [ webhook ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookUpdate'
+      responses:
+        "200":
+          description: Created webhook.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WebhookCreatedInfo' }
+
+  /v1/webhook/{hook_id}:
+    get:
+      summary: Get a webhook
+      description: Return a registered webhook in the repository.
+      operationId: getWebhook
+      tags: [ webhook ]
+      parameters:
+        - $ref: '#/components/parameters/WebhookIdPath'
+      responses:
+        "200":
+          description: Webhook found.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Webhook' }
+        "404":
+          description: Webhook not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete a webhook
+      description: Delete a registered webhook from the repository.
+      operationId: deleteWebhook
+      tags: [ webhook ]
+      parameters:
+        - $ref: '#/components/parameters/WebhookIdPath'
+        - $ref: '#/components/parameters/ForceDeleteQuery'
+      responses:
+        "200": { $ref: '#/components/responses/Success' }
+        "404":
+          description: Webhook not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+
+  ### Other meta endpoints ###
+  /v1/info:
+    get:
+      summary: Returns information about the Semantic Repository
+      operationId: getInfoRouteV1
+      tags: [ meta ]
+      responses:
+        "200": { $ref: '#/components/responses/Info' }
+
+  /info:
+    get:
+      summary: Returns information about the Semantic Repository
+      operationId: getInfoRoute
+      tags: [ meta ]
+      responses:
+        "200": { $ref: '#/components/responses/Info' }
+
+  /v1/version:
+    get:
+      summary: Returns the version of the Semantic Repository
+      operationId: getVersionRouteV1
+      tags: [ meta ]
+      responses:
+        "200": { $ref: '#/components/responses/Version' }
+
+  /version:
+    get:
+      summary: Returns the version of the Semantic Repository
+      operationId: getVersionRoute
+      tags: [ meta ]
+      responses:
+        "200": { $ref: '#/components/responses/Version' }
+
+  /v1/health:
+    get:
+      summary: Returns the health status of the Semantic Repository
+      operationId: getHealthRouteV1
+      tags: [ meta ]
+      responses:
+        "200": { description: Health status }
+
+  /health:
+    get:
+      summary: Returns the health status of the Semantic Repository
+      operationId: getHealthRoute
+      tags: [ meta ]
+      responses:
+        "200": { description: Health status }
+
+  /v1/api-export/openapi:
+    get:
+      summary: Returns the OpenAPI specification of the Semantic Repository
+      operationId: getOpenApiSpecRoute
+      tags: [ openapi ]
+      responses:
+        "200":
+          description: OpenAPI specification
+          content:
+            application/json:
+              schema: { type: object }
+
+  /v1/api-export/swagger.json:
+    get:
+      summary: Alternative URL for retrieving the OpenAPI specification of the Semantic Repository
+      operationId: getOpenApiJsonSpecRoute
+      tags: [ openapi ]
+      responses:
+        "200":
+          description: OpenAPI specification
+          content:
+            application/json:
+              schema: { type: object }
+
+  /v1/api-export/swagger.yaml:
+    get:
+      summary: Returns OpenAPI specification of the Semantic Repository in the YAML format
+      operationId: getOpenApiYamlSpecRoute
+      tags: [ openapi ]
+      responses:
+        "200":
+          description: OpenAPI specification
+          content:
+            application/yaml:
+              schema: { type: object }
+
+  /v1/api-export/docs:
+    get:
+      summary: Returns the Swagger UI for the Semantic Repository
+      operationId: getSwaggerUiRoute
+      tags: [ openapi ]
+      responses:
+        "200":
+          description: Swagger UI
+          content:
+            text/html:
+              schema: { type: string }
+
+components:
+  parameters:
+    NamespacePath:
+      name: namespace
+      in: path
+      description: Name of the namespace
+      required: true
+      schema: { $ref: '#/components/schemas/NamespaceName' }
+
+    ModelPath:
+      name: model
+      in: path
+      description: Name of the model
+      required: true
+      schema: { $ref: '#/components/schemas/ModelName' }
+
+    ModelVersionPath:
+      name: version
+      in: path
+      description: Version tag
+      required: true
+      schema: { $ref: '#/components/schemas/ModelVersionName' }
+
+    DocJobIdPath:
+      name: job_id
+      in: path
+      description: Documentation generation job ID
+      required: true
+      schema:
+        maxLength: 36
+        minLength: 36
+        type: string
+
+    DocFilePath:
+      name: file
+      in: path
+      description: File path (relative to the root of the generated documentation)
+      required: true
+      schema:
+        type: string
+        default: index.html
+
+    WebhookIdPath:
+      name: hook_id
+      in: path
+      description: Webhook's identifier
+      required: true
+      schema: { $ref: '#/components/schemas/WebhookId' }
+
+    PageQuery:
+      name: page
+      in: query
+      description: Number of the page of child entities to be displayed (1-based).
+        Defaults to 1.
+      schema:
+        type: integer
+        format: int32
+        default: 1
+        minimum: 1
+
+    PageSizeQuery:
+      name: page_size
+      in: query
+      description: Number of model versions to display per page.
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+
+    SortByQuery:
+      name: sort_by
+      in: query
+      description: Field to sort the list of model versions by.
+      schema:
+        type: string
+
+    OrderQuery:
+      name: order
+      in: query
+      description: Order in which sort the list of model versions. Default is ascending.
+      schema:
+        type: string
+        default: ascending
+        enum:
+          - ascending
+          - descending
+
+    FilterQuery:
+      name: filter
+      in: query
+      description: A field filter – parameters are in the form of 'f.*'.
+        Replace the '*' with the field name to filter by and set the value to the
+        one that you want to filter for. This parameter can be used more than once
+        – all filter conditions will be joined with the AND operator.
+      schema:
+        type: object
+        additionalProperties:
+          type: string
+          description: Filter for the field whose name is specified after "f." in the parameter name.
+      style: form
+      explode: true
+
+    ForceDeleteQuery:
+      name: force
+      in: query
+      description: Set this parameter to '1' to really perform the deletion. This
+        is to prevent accidental deletions.
+      required: true
+      schema:
+        type: string
+        enum:
+          - "1"
+
+    OverwriteQuery:
+      name: overwrite
+      in: query
+      description: Set this parameter to '1' when overwriting content that was uploaded
+        earlier in the same place. Without this parameter an overwriting upload
+        will be rejected with HTTP 400.
+      schema:
+        type: string
+        enum:
+          - "1"
+
+    PluginQuery:
+      name: plugin
+      in: query
+      description: Specifies the documentation compilation plugin to use.
+        The list of available plugins can be retrieved with `GET /v1/doc_gen`.
+      schema:
+        type: string
+
+  responses:
+    Success:
+      description: Success
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/SuccessResponse' }
+
+    BadRequest:
+      description: 'Invalid request – malformed content, missing parameters, etc.'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    DuplicateKey:
+      description: Duplicate key error. There already exists an entity with this name.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    ContentFound:
+      description: Content found
+      content:
+        '*/*': { }
+
+    ContentNotFound:
+      description: Content not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Info:
+      description: General information
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/InfoResponse'
+
+    Version:
+      description: Semantic Versioning version tag (as plain string)
+      content:
+        text/plain:
+          schema: { type: string }
+
+  schemas:
+    PostFormData:
+      required:
+        - content
+      type: object
+      properties:
+        content:
+          type: string
+
+    ### Names of things ###
+    NamespaceName:
+      type: string
+      minLength: 3
+      maxLength: 100
+      pattern: "^[\\w-]{3,100}$"
+
+    ModelName:
+      type: string
+      minLength: 1
+      maxLength: 100
+      pattern: "^[a-zA-Z0-9][\\w-]{0,99}$"
+
+    ModelVersionName:
+      type: string
+      minLength: 1
+      maxLength: 100
+      pattern: "^[a-zA-Z0-9][\\w-+.]{0,99}$"
+
+    FormatName:
+      type: string
+      minLength: 1
+      maxLength: 100
+      pattern: "^[a-zA-Z0-9][\\w\\-/+.]{0,99}$"
+
+    WebhookId:
+      description: Unique webhook identifier (24 lowercase hexadecimal characters).
+      type: string
+      minLength: 24
+      maxLength: 24
+      pattern: "^[\\da-fA-F]{24}$"
+
+    ### Success / error ###
+    SuccessResponse:
+      description: Response indicating that the operation was successful.
+      required:
+        - message
+      type: object
+      properties:
+        message:
+          type: string
+        warnings:
+          description: Optional array of non-fatal warnings.
+          type: array
+          items:
+            type: string
+
+    ErrorResponse:
+      description: Response indicating that an error has occurred when processing the request.
+      required:
+        - error
+      type: object
+      properties:
+        error:
+          type: string
+
+    ### Meta endpoints ###
+    InfoResponse:
+      required:
+        - name
+        - version
+      type: object
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+
+    ### Documentation ###
+    DocMetadata:
+      required:
+        - enabledPlugins
+      type: object
+      properties:
+        enabledPlugins:
+          description: |
+            Currently enabled plugins in this Semantic Repository instance.
+            The keys here correspond to the plugin name when creating a new documentation job.
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/DocPlugin'
+
+    DocPlugin:
+      description: A documentation generation plugin.
+      required:
+        - allowedFileExtensions
+        - description
+      type: object
+      properties:
+        description:
+          description: Human-readable description of this plugin.
+          type: string
+        allowedFileExtensions:
+          description: List of extensions for files that can be uploaded to this documentation plugin.
+          uniqueItems: true
+          type: array
+          items:
+            type: string
+
+    DocumentationJob:
+      description: A documentation generation job.
+      required:
+        - jobId
+        - plugin
+        - started
+        - status
+      type: object
+      properties:
+        jobId:
+          description: Unique job identifier (24 lowercase hexadecimal characters).
+          type: string
+        plugin:
+          description: Key of the plugin used for this job.
+          type: string
+        status:
+          description: Current status of the job.
+          type: string
+          enum:
+            - Started
+            - Failed
+            - Success
+        started:
+          description: Date and time at which the job was submitted (ISO format).
+          type: string
+        ended:
+          description: Date and time at which the job was completed (ISO format).
+          type: string
+        error:
+          description: If the job failed, the error that occurred during compilation.
+          type: string
+
+    ### Metadata ###
+    EntityMetadata:
+      description: Free-form metadata attached by the user to this entity.
+      type: object
+      additionalProperties:
+        oneOf:
+          - type: string
+          - type: array
+            items: { type: string }
+
+    ### Entity sets ###
+    EntitySet:
+      required:
+        - inViewCount
+        - page
+        - pageSize
+        - totalCount
+      type: object
+      properties:
+        totalCount:
+          description: Total count of all entities in this collection.
+          type: integer
+          format: int32
+          minimum: 0
+        inViewCount:
+          description: Number of entities visible on the current page of the collection.
+          type: integer
+          format: int32
+          minimum: 0
+        page:
+          description: 1-based number of the current page.
+          type: integer
+          format: int32
+          minimum: 1
+        pageSize:
+          description: Size of the current page (max number of entities that can be displayed per page).
+          type: integer
+          format: int32
+          minimum: 0
+
+    ### Model version ###
+    ModelVersion:
+      description: A version of a model in the repository.
+      required:
+        - model
+        - namespace
+        - version
+      type: object
+      properties:
+        version: { $ref: '#/components/schemas/ModelVersionName' }
+        model: { $ref: '#/components/schemas/ModelName' }
+        namespace: { $ref: '#/components/schemas/NamespaceName' }
+        defaultFormat: { $ref: '#/components/schemas/FormatName' }
+        metadata: { $ref: '#/components/schemas/EntityMetadata' }
+
+    ModelVersionUpdate:
+      description: Update for a model in the repository.
+      type: object
+      properties:
+        defaultFormat: { $ref: '#/components/schemas/FormatName' }
+        metadata: { $ref: '#/components/schemas/EntityMetadata' }
+
+    FullModelVersion:
+      allOf:
+        - $ref: '#/components/schemas/ModelVersion'
+        - properties:
+            formats:
+              type: object
+              additionalProperties:
+                $ref: '#/components/schemas/StoredFile'
+            documentation:
+              $ref: '#/components/schemas/DocumentationJob'
+
+    StoredFile:
+      description: A filed stored in the repository.
+      required:
+        - contentType
+        - md5
+        - size
+      type: object
+      properties:
+        size:
+          description: File's size in bytes.
+          type: integer
+          format: int64
+        md5:
+          description: File's MD5 checksum.
+          type: string
+        contentType:
+          description: File's content type, extracted from HTTP headers on upload.
+          type: string
+
+    ModelVersionSet:
+      allOf:
+        - $ref: '#/components/schemas/EntitySet'
+        - required:
+            - items
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/ModelVersion'
+
+    ### Models ###
+    Model:
+      description: A data model in the repository.
+      required:
+        - model
+        - namespace
+      type: object
+      properties:
+        model: { $ref: '#/components/schemas/ModelName' }
+        namespace: { $ref: '#/components/schemas/NamespaceName' }
+        latestVersion: { $ref: '#/components/schemas/ModelVersionName' }
+        metadata: { $ref: '#/components/schemas/EntityMetadata' }
+
+    ModelUpdate:
+      description: An update to a model in the repository.
+      type: object
+      properties:
+        latestVersion: { $ref: '#/components/schemas/ModelVersionName' }
+        metadata: { $ref: '#/components/schemas/EntityMetadata' }
+
+    FullModel:
+      allOf:
+        - $ref: '#/components/schemas/Model'
+        - properties:
+            versions:
+              $ref: '#/components/schemas/ModelVersionSet'
+
+    ModelSet:
+      allOf:
+        - $ref: '#/components/schemas/EntitySet'
+        - required:
+            - items
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Model'
+
+    ### Namespace ###
+    Namespace:
+      description: A namespace in the repository.
+      required:
+        - namespace
+      type: object
+      properties:
+        namespace: { $ref: '#/components/schemas/NamespaceName' }
+        metadata: { $ref: '#/components/schemas/EntityMetadata' }
+
+    NamespaceUpdate:
+      description: An update to a namespace in the repository.
+      type: object
+      properties:
+        metadata: { $ref: '#/components/schemas/EntityMetadata' }
+
+    FullNamespace:
+      allOf:
+        - $ref: '#/components/schemas/Namespace'
+        - properties:
+            models:
+              $ref: '#/components/schemas/ModelSet'
+
+    NamespaceSet:
+      allOf:
+        - $ref: '#/components/schemas/EntitySet'
+        - required:
+            - items
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Namespace'
+
+    ### Root information ###
+    RootInfo:
+      description: |
+        Root information about this repository instance.
+        Contains a list of available namespaces.
+      type: object
+      properties:
+        namespaces:
+          $ref: '#/components/schemas/NamespaceSet'
+
+    ### Webhooks ###
+    WebhookContext:
+      description: Object path context to which this hook should be applied.
+      type: object
+      properties:
+        namespace: { $ref: '#/components/schemas/NamespaceName' }
+        model: { $ref: '#/components/schemas/ModelName' }
+        version: { $ref: '#/components/schemas/ModelVersionName' }
+
+    WebhookAction:
+      description: The type of action to which the webhook is registered.
+      type: string
+      enum:
+        - content_upload
+
+    WebhookCallback:
+      description: Callback URI to which the POST request will be sent.
+      type: string
+
+    Webhook:
+      description: A webhook registered in the Semantic Repository.
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/WebhookId' }
+        action: { $ref: '#/components/schemas/WebhookAction' }
+        callback: { $ref: '#/components/schemas/WebhookCallback' }
+        context: { $ref: '#/components/schemas/WebhookContext' }
+      required:
+        - id
+        - action
+        - context
+        - callback
+
+    WebhookUpdate:
+      description: Webhook when it is being created in the repository.
+      type: object
+      properties:
+        action: { $ref: '#/components/schemas/WebhookAction' }
+        callback: { $ref: '#/components/schemas/WebhookCallback' }
+        context: { $ref: '#/components/schemas/WebhookContext' }
+      required:
+        - action
+        - callback
+
+    WebhookCreatedInfo:
+      description: Response from the repository after creating a webhook.
+      type: object
+      properties:
+        message:
+          description: Informational message.
+          type: string
+        handle: { $ref: '#/components/schemas/WebhookId' }
+
+    WebhookSet:
+      description: List of registered webhooks.
+      allOf:
+        - $ref: '#/components/schemas/EntitySet'
+        - required:
+            - items
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Webhook'

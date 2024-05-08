@@ -1,0 +1,48 @@
+# Development Docker Compose stack
+# Easiest way to debug the core app is to deploy only the "external" services in the stack
+# and run the app on the host's JVM.
+
+version: '3'
+
+services:
+  semrepo-backend:
+    # First you must build this image locally
+    image: assistiot/semantic-repository
+    restart: always
+    ports:
+      - "8480:8080"
+    environment:
+      REPO_MONGO_URL: mongodb://root:akka@mongo-primary:27017/?serverSelectionTimeoutMS=500&replicaSet=replicaset
+      REPO_S3_URL: http://minio:9000
+    depends_on:
+      - mongo-primary
+      - minio
+
+  mongo-primary:
+    image: docker.io/bitnami/mongodb:6.0
+    ports:
+      # You can connect to this with MongoDB Compass running on localhost
+      - '127.0.0.1:27017:27017'
+    environment:
+      # If you want to connect to the DB from localhost, you may need to uncomment this line:
+      MONGODB_ADVERTISED_HOSTNAME: localhost
+      MONGODB_REPLICA_SET_MODE: primary
+      MONGODB_ROOT_PASSWORD: akka
+      MONGODB_REPLICA_SET_KEY: replicasetkey
+
+  # MinIO image for testing. Anything that provides an S3-compatible interface
+  # will work on production.
+  # user: minioadmin
+  # pass: minioadmin
+  minio:
+    image: minio/minio:latest
+    command: 'server /data --console-address ":9001"'
+    restart: always
+    ports:
+      - '127.0.0.1:9000:9000'
+      - '127.0.0.1:9001:9001'
+
+networks:
+  default:
+    name: mqtt
+    external: true

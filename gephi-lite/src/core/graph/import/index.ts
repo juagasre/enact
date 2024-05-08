@@ -4,7 +4,7 @@ import graphml from "graphology-graphml/browser";
 
 import { resetStates } from "../../context/dataContexts";
 import { preferencesActions } from "../../preferences";
-// import { resetCamera } from "../../sigma";
+import { resetCamera } from "../../sigma";
 import { userAtom } from "../../user";
 import { atom } from "../../utils/atoms";
 import { asyncAction } from "../../utils/producers";
@@ -87,7 +87,7 @@ export const importFile = asyncAction(async (file: NonNullable<GraphOrigin>) => 
     resetStates(false);
     setGraphDataset({ ...initializeGraphDataset(graph), origin: file });
     if (file.type === "remote") addRemoteFile(file);
-    // resetCamera({ forceRefresh: false });
+    resetCamera({ forceRefresh: false });
   } catch (e) {
     importStateAtom.set({ type: "error", message: (e as Error).message });
     throw e;

@@ -30,6 +30,7 @@ import { StatisticsPanel } from "./StatisticsPanel";
 import { UserSettingsPanel } from "./UserSettingsPanel";
 import { WelcomeModal } from "./modals/WelcomeModal";
 import { SendGraphToGnn } from "./SendGraphToGNN";
+import { SelectGraphFromSemRepo } from "./SelectGraphFromSemRepo";
 
 type Tool = {
   type: "tool";
@@ -104,6 +105,15 @@ export const GraphPage: FC = () => {
         label: t("GNN"),
         icon: SentToGnnIcon,
         panel: SendGraphToGnn,
+        // onClick: () => {
+        //   window.open(config.website_url, "_blank", "noopener");
+        // },
+      },
+      {
+        type: "tool",
+        label: t("GNN"),
+        icon: SentToGnnIcon,
+        panel: SelectGraphFromSemRepo,
         // onClick: () => {
         //   window.open(config.website_url, "_blank", "noopener");
         // },

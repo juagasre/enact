@@ -1,0 +1,75 @@
+include:
+  - project: 'sripas/gitlab-ci-templates'
+    file: 'docker-build.gitlab-ci.yml'
+  - project: 'sripas/gitlab-ci-templates'
+    file: 'mirror-repo.gitlab-ci.yml'
+  - project: 'sripas/gitlab-ci-templates'
+    file: 'mirror-wiki.gitlab-ci.yml'
+  - project: 'sripas/gitlab-ci-templates'
+    file: 'openapi-doc-gen.gitlab-ci.yml'
+  - project: 'sripas/gitlab-ci-templates'
+    file: 'openapi-wiki-edit.gitlab-ci.yml'
+  - project: 'sripas/gitlab-ci-templates'
+    file: 'publish-docs.gitlab-ci.yml'
+
+default:
+  # GraalVM Java 17, sbt 1.7.1, Scala 3.1.3
+  image: sbtscala/scala-sbt:graalvm-ce-21.3.0-java17_1.7.1_3.1.3
+
+variables:
+  # SemRepo
+  REPO_MONGO_URL: mongodb://root:akka@mongo-primary:27017/?serverSelectionTimeoutMS=500&replicaSet=replicaset
+  REPO_S3_URL: http://minio:9000
+
+stages:
+  - build
+  - test
+  - doc-gen
+  - wiki-edit
+  - mirror
+
+build-sbt:
+  stage: build
+  artifacts:
+    paths:
+      - '*.jar'
+  script:
+    - |
+      set -eux
+      sbt clean compile test:compile package assembly
+      mv "target/scala-$SCALA_VERSION/semantic-repo.jar" .
+      mv "target/scala-$SCALA_VERSION/semantic-repo-assembly.jar" .
+
+docker-build:
+  # We need to run this after the build... but it can be run with testing in parallel
+  stage: test
+
+test:
+  artifacts:
+    paths:
+      - swagger.json
+      - swagger.yaml
+  variables:
+    # !!! Allow MongoDB instances to communicate with each other
+    FF_NETWORK_PER_BUILD: 1
+  services:
+    # One MongoDB instance in a pseudo-replication setup for testing
+    - name: bitnami/mongodb:6.0
+      alias: mongo-primary
+      variables:
+        MONGODB_ADVERTISED_HOSTNAME: mongo-primary
+        MONGODB_REPLICA_SET_MODE: primary
+        MONGODB_ROOT_PASSWORD: akka
+        MONGODB_REPLICA_SET_KEY: replicasetkey
+    - name: minio/minio:latest
+      alias: minio
+      command: ['server', '/data']
+  script:
+    - sbt test
+    # Run the demo script for an end-to-end test
+    # The Scala/sbt image happens to have bash and curl, so this works normally
+    # But first, we need to spin up the repo
+    - sbt run &
+    - cd demo
+    - sleep 30
+    - "./demo-setup.sh 'http://localhost:8080'"
