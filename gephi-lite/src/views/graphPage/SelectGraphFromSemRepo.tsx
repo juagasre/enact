@@ -46,9 +46,10 @@ export const SelectGraphFromSemRepo: FC = () => {
   const [optionVersion, setOptionVersion] = useState<MetricOption | null>(null);
   // const [optionNamespace, setOptionNamespace] = useState("enact");
 
+  const url_sem_repo_proxy = "localhost:5173/sem_repo"
 
   const getNamespaces = useCallback(async () => {
-    const data = await fetch("http://localhost:27621/v1/m/").then(data => data.json());
+    const data = await fetch(`http://${url_sem_repo_proxy}/v1/m/`).then(data => data.json());
     const array: MetricOption[] = [];
     data.namespaces.items.map((namespace: Namespace) => {
       array.push({ value: namespace.namespace, label: namespace.namespace });
@@ -58,7 +59,7 @@ export const SelectGraphFromSemRepo: FC = () => {
   }, []);
 
   const getModels = useCallback(async () => {
-    const data = await fetch(`http://localhost:27621/v1/m/${optionNamespace?.value}`).then(data => data.json());
+    const data = await fetch(`http://${url_sem_repo_proxy}/v1/m/${optionNamespace?.value}`).then(data => data.json());
     const array: MetricOption[] = [];
     data.models.items.map((model: Model) => {
       array.push({ value: model.model, label: model.model });
@@ -67,7 +68,7 @@ export const SelectGraphFromSemRepo: FC = () => {
   }, [optionNamespace]);
 
   const getVersions = useCallback(async () => {
-    const data = await fetch(`http://localhost:27621/v1/m/${optionNamespace?.value}/${optionModel?.value}`).then(data => data.json());
+    const data = await fetch(`http://${url_sem_repo_proxy}/v1/m/${optionNamespace?.value}/${optionModel?.value}`).then(data => data.json());
     const array: MetricOption[] = [];
     data.versions.items.map((version: Version) => {
       array.push({ value: version.version, label: version.version });
@@ -77,7 +78,7 @@ export const SelectGraphFromSemRepo: FC = () => {
   }, [optionNamespace, optionModel]);
 
   const representFile = useCallback(async () => {
-    const file: RemoteFile = { type: "remote", url: `http://localhost:27621/v1/m/${optionNamespace?.value}/${optionModel?.value}/${optionVersion?.value}/content?format=gexf`, filename: `${optionNamespace?.value}_${optionModel?.value}_${optionVersion?.value}` };
+    const file: RemoteFile = { type: "remote", url: `http://${url_sem_repo_proxy}/v1/m/${optionNamespace?.value}/${optionModel?.value}/${optionVersion?.value}/content?format=gexf`, filename: `${optionNamespace?.value}_${optionModel?.value}_${optionVersion?.value}` };
     await importFile(file);
     // console.log(optionsNamespace);
   }, [optionNamespace, optionModel, optionVersion, importFile]);
@@ -102,12 +103,12 @@ export const SelectGraphFromSemRepo: FC = () => {
     // console.log("Option changed to", optionNamespace);
   }, [optionNamespace, optionModel, getVersions])
 
-  useEffect(() => {
-    if (optionVersion != null) {
-      representFile()
-    }
-    // console.log("Option changed to", optionNamespace);
-  }, [optionNamespace, optionModel, optionVersion, representFile])
+  // useEffect(() => {
+  //   if (optionVersion != null) {
+  //     representFile()
+  //   }
+  //   // console.log("Option changed to", optionNamespace);
+  // }, [optionNamespace, optionModel, optionVersion, representFile])
 
   return (
     <div className="panel-block">
@@ -123,7 +124,8 @@ export const SelectGraphFromSemRepo: FC = () => {
         <Select options={optionsModel} onChange={setOptionModel}></Select></> : <></>}
       {optionModel != null ? <><p className="text-muted small d-none d-md-block">Select version</p>
         <Select options={optionsVersion} onChange={setOptionVersion}></Select></> : <></>}
-
+      {optionVersion != null ? <><p className="text-muted small d-none d-md-block"></p>
+        <button onClick={representFile}>Show graph</button></> : <></>}
     </div>
   )
 };

@@ -184,8 +184,8 @@ export const MetricForm: FC<{ metric: Metric<any, any, any>; onClose: () => void
                 warning={
                   !!fieldsIndex[metricConfig.attributeNames[value]]
                     ? (t(`statistics.${metric.itemType}_attribute_already_exists`, {
-                        field: metricConfig.attributeNames[value],
-                      }) as string)
+                      field: metricConfig.attributeNames[value],
+                    }) as string)
                     : undefined
                 }
               />
